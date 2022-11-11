@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/gempir/go-twitch-irc/v3"
 )
 
 var (
+	mutex       = sync.RWMutex{}
 	isPolling   = false
 	frequencies = map[string]int{}
 	resultLimit = 20
@@ -24,6 +26,9 @@ func main() {
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		if isPolling {
+			mutex.Lock()
+			defer mutex.Unlock()
+
 			if val, ok := frequencies[message.Message]; ok {
 				frequencies[message.Message] = val + 1
 			} else {
@@ -60,10 +65,13 @@ func commandHandler(client *twitch.Client) {
 		case "exit":
 			client.Disconnect()
 		case "poll":
+			mutex.Lock()
 			frequencies = make(map[string]int) // Clear
 			isPolling = true
 			fmt.Println("Beginning polling...")
+			mutex.Unlock()
 		case "res":
+			mutex.RLock()
 			fmt.Println("Calculating results...")
 			isPolling = false
 
@@ -87,6 +95,7 @@ func commandHandler(client *twitch.Client) {
 					break
 				}
 			}
+			mutex.RUnlock()
 		default:
 			fmt.Println("Unknown command.")
 		}

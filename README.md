@@ -4,7 +4,7 @@ Twitch is a livestreaming service with categories ranging from 'Game Shows' to '
 This repository is by no means a 'best practices' guide, but a quick demonstration of simple multi-threading. The command listener, chat callback and notify are all handled in separate Goroutines.
 
 ## TODO
-- [ ] Use sync.RWMutex for concurrent access
+- [x] Use sync.RWMutex for concurrent access
 - [ ] Prettify this README
 
 ## How to Run
