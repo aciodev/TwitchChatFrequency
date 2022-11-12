@@ -69,25 +69,25 @@ func commandHandler(client *twitch.Client) {
 		case "res":
 			fmt.Println("Calculating results...")
 
-			var ss []Pair
+			var pairs []Pair
 
 			mutex.RLock()
 			isPolling = false
 
 			for k, v := range frequencies {
-				ss = append(ss, Pair{k, v})
+				pairs = append(pairs, Pair{k, v})
 			}
 
 			mutex.RUnlock()
 
-			sort.Slice(ss, func(i, j int) bool {
-				return ss[i].Value > ss[j].Value
+			sort.Slice(pairs, func(i, j int) bool {
+				return pairs[i].Value > pairs[j].Value
 			})
 
 			var count = 0
 
-			fmt.Println("Out of", len(frequencies), "unique messages, top", resultLimit, "results shown")
-			for _, kv := range ss {
+			fmt.Println("Out of", len(pairs), "unique messages, top", resultLimit, "results shown")
+			for _, kv := range pairs {
 				fmt.Printf("[%d] %s\n", kv.Value, kv.Key)
 				count += 1
 				if count == resultLimit {
