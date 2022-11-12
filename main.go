@@ -25,18 +25,13 @@ func main() {
 	client := twitch.NewAnonymousClient()
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
+		mutex.Lock()
+		defer mutex.Unlock()
+
 		if isPolling {
-			mutex.Lock()
-			defer mutex.Unlock()
-
-			if val, ok := frequencies[message.Message]; ok {
-				frequencies[message.Message] = val + 1
-			} else {
-				frequencies[message.Message] = 1
-			}
+			trimmed := strings.ToLower(strings.TrimSpace(message.Message))
+			frequencies[trimmed] += 1
 		}
-
-		//fmt.Println(message.Message)
 	})
 
 	client.Join("xQc")
@@ -65,21 +60,25 @@ func commandHandler(client *twitch.Client) {
 		case "exit":
 			client.Disconnect()
 		case "poll":
+			fmt.Println("Beginning polling...")
+
 			mutex.Lock()
 			frequencies = make(map[string]int) // Clear
 			isPolling = true
-			fmt.Println("Beginning polling...")
 			mutex.Unlock()
 		case "res":
-			mutex.RLock()
 			fmt.Println("Calculating results...")
-			isPolling = false
 
 			var ss []Pair
+
+			mutex.RLock()
+			isPolling = false
 
 			for k, v := range frequencies {
 				ss = append(ss, Pair{k, v})
 			}
+
+			mutex.RUnlock()
 
 			sort.Slice(ss, func(i, j int) bool {
 				return ss[i].Value > ss[j].Value
@@ -95,7 +94,6 @@ func commandHandler(client *twitch.Client) {
 					break
 				}
 			}
-			mutex.RUnlock()
 		default:
 			fmt.Println("Unknown command.")
 		}
