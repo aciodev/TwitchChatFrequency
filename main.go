@@ -86,7 +86,7 @@ func printHelp() {
 	fmt.Println("Unknown command. Try the following:")
 	fmt.Println("join <channel> - to join a Twitch chat")
 	fmt.Println("leave          - to leave a Twitch chat")
-	fmt.Println("poll           - to begin collecting chat messages")
+	fmt.Println("poll           - to begin collecting chat messages (resets collected data)")
 	fmt.Println("res            - to print the top K frequent chat messages")
 	fmt.Println("exit           - to close this app")
 }
@@ -134,14 +134,16 @@ func printResults() {
 
 	var pairs []Pair
 
+	// -- read lock the frequencies --
 	mutex.RLock()
-	isPolling = false
 
 	for k, v := range frequencies {
 		pairs = append(pairs, Pair{k, v})
 	}
 
 	mutex.RUnlock()
+
+	// -- pairs available, end concurrent access --
 
 	sort.Slice(pairs, func(i, j int) bool {
 		return pairs[i].Value > pairs[j].Value
