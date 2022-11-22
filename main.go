@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ var (
 	isPolling   = false
 	frequencies = map[string]int{}
 	resultLimit = 20
+	regex, _    = regexp.Compile("\\s\\s+")
 )
 
 type Pair struct {
@@ -29,8 +31,10 @@ func main() {
 		defer mutex.Unlock()
 
 		if isPolling {
-			trimmed := strings.ToLower(strings.TrimSpace(message.Message))
-			frequencies[trimmed] += 1
+			trimmedInnerSpaces := regex.ReplaceAllString(message.Message, " ")
+			trimmedNewLinesAndSpaces := strings.TrimSpace(trimmedInnerSpaces)
+			lowercase := strings.ToLower(trimmedNewLinesAndSpaces)
+			frequencies[lowercase] += 1
 		}
 	})
 
