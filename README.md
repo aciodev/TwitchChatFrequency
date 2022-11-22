@@ -21,7 +21,17 @@ Here is a step-by-step guide to run this application.
 
 ## How to Use
 1. Open Terminal (macOS/Linux) or Command Prompt (Windows)
-2. Type ./TwitchChat (macOS/Linux) or TwitchChat.exe (Windows)
+2. Type `./TwitchChat` (macOS/Linux) or `TwitchChat.exe` (Windows)
+4. Type `join <channel-name>`
 3. Type `poll` to start collecting chat messages
 4. Type `res` to print the top 20 results
 5. Type `exit` to stop the app
+
+## Commands
+| Command        | Description |
+| -------------  | ------------- |
+| `join <channel>` | joins a Twitch channel anonymously |
+| `leave`          | leaves the current Twitch channel |
+| `poll`           | begin collecting chat messages |
+| `res`            | print the top K frequent chat messages |
+| `exit`           | close this app |
