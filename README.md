@@ -5,12 +5,12 @@ This repository is by no means a 'best practices' guide, but a quick demonstrati
 
 ## TODO
 - [x] Use sync.RWMutex for concurrent access
-- [ ] Prettify this README
+- [x] Prettify this README
 
 ## Demo
 ![Demo Run](assets/demo.png)
 
-## How to Setup
+## How to Build
 Here is a step-by-step guide to run this application.
 
 1. Download and install Go for your system. [Download link](https://go.dev/dl/)
@@ -19,13 +19,9 @@ Here is a step-by-step guide to run this application.
 4. Open Terminal (macOS/Linux) or Command Prompt (Windows) and type: `go mod tidy`
 5. Then `go build`
 
-## How to Use
+## How to Run
 1. Open Terminal (macOS/Linux) or Command Prompt (Windows)
 2. Type `./TwitchChat` (macOS/Linux) or `TwitchChat.exe` (Windows)
-4. Type `join <channel-name>`
-3. Type `poll` to start collecting chat messages
-4. Type `res` to print the top 20 results
-5. Type `exit` to stop the app
 
 ## Commands
 | Command        | Description |
