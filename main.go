@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	twitchClient  = twitch.NewAnonymousClient()
-	twitchChannel = ""
-	mutex         = sync.RWMutex{}
-	isPolling     = false
-	frequencies   = map[string]int{}
-	resultLimit   = 20
-	regex, _      = regexp.Compile("\\s\\s+")
+	twitchClient           = twitch.NewAnonymousClient()
+	twitchChannel          = ""
+	mutex                  = sync.RWMutex{}
+	isPolling              = false
+	frequencies            = map[string]int{}
+	resultLimit            = 20
+	regexInnerSpace, _     = regexp.Compile("\\s\\s+")
+	regexTwitchUsername, _ = regexp.Compile("[a-zA-Z0-9_]{3,25}")
 )
 
 type Pair struct {
@@ -33,7 +34,7 @@ func main() {
 		defer mutex.Unlock()
 
 		if isPolling {
-			trimmedInnerSpaces := regex.ReplaceAllString(message.Message, " ")
+			trimmedInnerSpaces := regexInnerSpace.ReplaceAllString(message.Message, " ")
 			trimmedNewLinesAndSpaces := strings.TrimSpace(trimmedInnerSpaces)
 			lowercase := strings.ToLower(trimmedNewLinesAndSpaces)
 			frequencies[lowercase] += 1
@@ -113,6 +114,13 @@ func leaveExistingTwitchChannel() {
 }
 
 func joinTwitchChannel(channel string) {
+	if !regexTwitchUsername.Match([]byte(channel)) {
+		fmt.Println("Invalid Twitch username. Channels must only contain alphanumeric " +
+			"characters and underscores. They must also be no less than 3 characters, " +
+			"and no more than 25.")
+		return
+	}
+
 	twitchChannel = channel
 	fmt.Println("Joined Twitch channel: " + twitchChannel)
 	twitchClient.Join(twitchChannel)
