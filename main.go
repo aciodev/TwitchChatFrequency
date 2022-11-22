@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -11,11 +13,13 @@ import (
 )
 
 var (
-	mutex       = sync.RWMutex{}
-	isPolling   = false
-	frequencies = map[string]int{}
-	resultLimit = 20
-	regex, _    = regexp.Compile("\\s\\s+")
+	twitchClient  = twitch.NewAnonymousClient()
+	twitchChannel = ""
+	mutex         = sync.RWMutex{}
+	isPolling     = false
+	frequencies   = map[string]int{}
+	resultLimit   = 20
+	regex, _      = regexp.Compile("\\s\\s+")
 )
 
 type Pair struct {
@@ -24,9 +28,7 @@ type Pair struct {
 }
 
 func main() {
-	client := twitch.NewAnonymousClient()
-
-	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
+	twitchClient.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		mutex.Lock()
 		defer mutex.Unlock()
 
@@ -38,68 +40,121 @@ func main() {
 		}
 	})
 
-	client.Join("xQc")
-
 	go func() {
-		commandHandler(client)
+		commandHandler()
 	}()
 
-	err := client.Connect()
-	if err != nil {
-		panic(err)
+	_ = twitchClient.Connect()
+	fmt.Println("Thank you for using the app!")
+}
+
+func commandHandler() {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Print("> ")
+		commandString, _ := reader.ReadString('\n')
+		commandString = strings.Replace(commandString, "\n", "", -1)
+		commandArgs := strings.Split(commandString, " ")
+
+		switch strings.ToLower(commandArgs[0]) {
+		case "exit":
+			_ = twitchClient.Disconnect()
+			fmt.Println("Stopping the application.")
+			return
+		case "join":
+			if len(commandArgs) != 2 {
+				fmt.Println("Usage: join <username>")
+				continue
+			}
+
+			leaveExistingTwitchChannel()
+			joinTwitchChannel(commandArgs[1])
+		case "leave":
+			leaveExistingTwitchChannel()
+		case "poll":
+			beginPolling()
+		case "res":
+			printResults()
+		default:
+			printHelp()
+		}
 	}
 }
 
-func commandHandler(client *twitch.Client) {
-	var temp string
-	for {
-		_, err := fmt.Scanln(&temp)
-		if err != nil {
-			panic(err)
-		}
+func printHelp() {
+	fmt.Println("Unknown command. Try the following:")
+	fmt.Println("join <channel> - to join a Twitch chat")
+	fmt.Println("leave          - to leave a Twitch chat")
+	fmt.Println("poll           - to begin collecting chat messages")
+	fmt.Println("res            - to print the top K frequent chat messages")
+	fmt.Println("exit           - to close this app")
+}
 
-		command := strings.ToLower(temp)
+func validateInChat() bool {
+	if len(twitchChannel) == 0 {
+		fmt.Println("You must first join a Twitch Channel using: join <username>")
+		return false
+	}
 
-		switch command {
-		case "exit":
-			client.Disconnect()
-		case "poll":
-			fmt.Println("Beginning polling...")
+	return true
+}
 
-			mutex.Lock()
-			frequencies = make(map[string]int) // Clear
-			isPolling = true
-			mutex.Unlock()
-		case "res":
-			fmt.Println("Calculating results...")
+func leaveExistingTwitchChannel() {
+	if len(twitchChannel) != 0 {
+		fmt.Println("Leaving existing Twitch channel: " + twitchChannel)
+		twitchClient.Depart(twitchChannel)
+	}
+}
 
-			var pairs []Pair
+func joinTwitchChannel(channel string) {
+	twitchChannel = channel
+	fmt.Println("Joined Twitch channel: " + twitchChannel)
+	twitchClient.Join(twitchChannel)
+}
 
-			mutex.RLock()
-			isPolling = false
+func beginPolling() {
+	if !validateInChat() {
+		return
+	}
 
-			for k, v := range frequencies {
-				pairs = append(pairs, Pair{k, v})
-			}
+	fmt.Println("Monitoring " + twitchChannel + "'s chat...")
+	mutex.Lock()
+	frequencies = make(map[string]int) // Clear
+	isPolling = true
+	mutex.Unlock()
+}
 
-			mutex.RUnlock()
+func printResults() {
+	if !validateInChat() {
+		return
+	}
 
-			sort.Slice(pairs, func(i, j int) bool {
-				return pairs[i].Value > pairs[j].Value
-			})
+	fmt.Println("Calculating results for " + twitchChannel + "'s chat...")
 
-			var count = 0
+	var pairs []Pair
 
-			fmt.Println("Out of", len(pairs), "unique messages, top", resultLimit, "results shown")
-			for _, kv := range pairs {
-				fmt.Printf("[%d] %s\n", kv.Value, kv.Key)
-				count += 1
-				if count == resultLimit {
-					break
-				}
-			}
-		default:
-			fmt.Println("Unknown command.")
+	mutex.RLock()
+	isPolling = false
+
+	for k, v := range frequencies {
+		pairs = append(pairs, Pair{k, v})
+	}
+
+	mutex.RUnlock()
+
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].Value > pairs[j].Value
+	})
+
+	var count = 0
+
+	fmt.Println("Out of", len(pairs), "unique messages, top", resultLimit, "results shown")
+	for _, kv := range pairs {
+		fmt.Printf("[%d] %s\n", kv.Value, kv.Key)
+		count += 1
+		if count == resultLimit {
+			break
 		}
 	}
 }
