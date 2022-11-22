@@ -7,9 +7,21 @@ This repository is by no means a 'best practices' guide, but a quick demonstrati
 - [x] Use sync.RWMutex for concurrent access
 - [ ] Prettify this README
 
-## How to Run
-Download the repository using `git clone` or using the download button, then run:
-```
-go mod tidy
-go build && ./TwitchChat # for macOS
-```
+## Demo
+![Demo Run](assets/demo.png)
+
+## How to Setup
+Here is a step-by-step guide to run this application.
+
+1. Download and install Go for your system. [Download link](https://go.dev/dl/)
+2. Download this repository using `Code > Download Zip` or using `git clone`.
+3. Unzip the `TwitchChatFrequency-main.zip` file.
+4. Open Terminal (macOS/Linux) or Command Prompt (Windows) and type: `go mod tidy`
+5. Then `go build`
+
+## How to Use
+1. Open Terminal (macOS/Linux) or Command Prompt (Windows)
+2. Type ./TwitchChat (macOS/Linux) or TwitchChat.exe (Windows)
+3. Type `poll` to start collecting chat messages
+4. Type `res` to print the top 20 results
+5. Type `exit` to stop the app
