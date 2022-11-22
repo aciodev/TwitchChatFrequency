@@ -102,8 +102,13 @@ func validateInChat() bool {
 
 func leaveExistingTwitchChannel() {
 	if len(twitchChannel) != 0 {
-		fmt.Println("Leaving existing Twitch channel: " + twitchChannel)
+		fmt.Println("Leaving existing Twitch channel: " + twitchChannel + " and discarding collected chat messages.")
 		twitchClient.Depart(twitchChannel)
+
+		mutex.Lock()
+		frequencies = make(map[string]int)
+		isPolling = false
+		mutex.Unlock()
 	}
 }
 
